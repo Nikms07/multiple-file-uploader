@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Image/Video File Uploader</title>
+        
+        <style>
+
+            body {
+                margin-top: 5%;
+                background: #2980b9; /* fallback for old browsers */
+                background: -webkit-linear-gradient(to right, #2980b9, #6dd5fa, #ffffff); /* Chrome 10-25, Safari 5.1-6 */
+                background: linear-gradient(to right, #2980b9, #6dd5fa, #ffffff); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            }
+            .alert {
+                padding: 20px;
+                color: white
+            }
+
+            div.dis {
+                display: none;
+            }
+
+            .closebtn {
+                margin-left: 15px;
+                color: white;
+                font-weight: bold;
+                float: right;
+                font-size: 22px;
+                line-height: 20px;
+                cursor: pointer;
+                transition: 0.3s;
+            }
+
+            .closebtn::before {
+                content: "\2715";
+            }
+
+            .closebtn:hover {
+                color: black
+            }
+
+            .center {
+                text-align: center;
+            }
+
+            img {
+                height: 240px;
+                width: 320px;
+                margin-right: 20px;
+            }
+
+            video {
+                height: 240px;
+                width: 320px;
+                margin-right: 20px;
+            }
+
+            .uploads {
+                margin-left: 68px;
+            }
+
+        </style>
+    </head>
+
+    <body>
+
+        <div class="center">
+            <div class="alrt"></div>
+            <h1>File Upload</h1>
+            <form enctype="multipart/form-data" id="formEl">
+                <input placeholder="Name..." type="text" name="name" required/><br><br>
+                <input placeholder="Email..." type="email" name="email" required/><br><br>
+                <input type="file" name="files" class="uploads" multiple required/><br><br>
+                <input type="submit" value="Upload"><br><br>
+                <strong><b>* Only jpg, jpeg, png, mp4 files allowed.</b></strong> 
+                <br><br><br>
+            </form>
+        </div>
+
+        <div>
+            <hr/>
+            <h2>Recent Uploads</h2>
+            <hr/>
+            <div class="recent"></div>
+            <br><br><br>
+        </div>
+
+        <div>
+            <hr/>
+            <h2>All Uploads</h2>
+            <hr/>
+            <div class="all"></div>
+        </div>
+
+        <script>
+
+            const allUploadsTemp = '<%- JSON.stringify(all) %>'
+            const allUploads = JSON.parse(allUploadsTemp)
+
+            const answerJSON = localStorage.getItem('answer')
+
+            let answer = answerJSON ? JSON.parse(answerJSON) : {
+                result: '',
+                message: '',
+                recent: []
+            }
+
+            const saveAnswer = () => {
+                localStorage.setItem('answer', JSON.stringify(answer))
+            }
+
+            answer.recent = answer.recent.filter((ri) => allUploads.includes(ri.filename))
+            saveAnswer()
+
+            const formEl = document.querySelector('#formEl')
+
+            const submitForm = () =>  new Promise((resolve, reject) => {
+                const request = new XMLHttpRequest()
+                request.open('POST', '/upload')
+                request.responseType = 'json'
+                request.onload = () => {
+                    if (request.status == 200) {
+                        resolve(request.response)
+                    } else {
+                        reject(request.status)
+                    }
+                }
+
+                request.send(new FormData (formEl))
+            })
+
+            const loadAnswer = async () => {
+                answer = await submitForm()
+            }
+
+            const renderRecent = () => {
+                const recentEl = document.querySelector('.recent')
+                recentEl.innerHTML = ''
+
+                if (answer.recent.length != 0) {
+                    answer.recent.forEach(file => {
+            
+                        const linkEl = document.createElement('a')
+                        linkEl.setAttribute('href', file.path)
+
+                        if (file.mimetype === 'video/mp4') {
+                            const vidEl = document.createElement('video')
+                            vidEl.setAttribute('controls', true)
+
+                            const vidsrcEl = document.createElement('source')
+                            vidsrcEl.setAttribute('src', file.path)
+                            vidsrcEl.setAttribute('type', file.mimetype)
+
+                            vidEl.appendChild(vidsrcEl)
+                            linkEl.appendChild(vidEl)
+                        } else {
+                            const imgEl = document.createElement('img')
+                            imgEl.setAttribute('src', file.path)
+
+                            linkEl.appendChild(imgEl)
+                        }
+                        recentEl.appendChild(linkEl)
+                    })
+                } else {
+                    const emptyEl = document.createElement('p')
+                    emptyEl.textContent = 'No recent uploads yet.'
+                    recentEl.appendChild(emptyEl)
+                }
+            }
+
+            const renderAll = () => {
+
+                const allEl = document.querySelector('.all')
+                allEl.innerHTML = ''
+
+                if (allUploads.length != 0) {
+                    allUploads.forEach(file => {
+                        
+                        const linkEl = document.createElement('a')
+                        linkEl.setAttribute('href', `uploads/${file}`)
+
+                        if (file.split('.').pop() === 'mp4') {
+                            const vidEl = document.createElement('video')
+                            vidEl.setAttribute('controls', true)
+
+                            const vidsrcEl = document.createElement('source')
+                            vidsrcEl.setAttribute('src', `uploads/${file}`)
+                            vidsrcEl.setAttribute('type', 'video/mp4')
+
+                            vidEl.appendChild(vidsrcEl)
+                            linkEl.appendChild(vidEl)
+                        } else {
+                            const imgEl = document.createElement('img')
+                            imgEl.setAttribute('src', `uploads/${file}`)
+
+                            linkEl.appendChild(imgEl)
+                        }
+                        allEl.appendChild(linkEl)
+                    })
+                } else {
+                    const emptyEl = document.createElement('p')
+                    emptyEl.textContent = 'No uploads yet.'
+
+                    allEl.appendChild(emptyEl)
+                }
+            }
+
+            formEl.addEventListener('submit', function (e) {
+                e.preventDefault()
+                loadAnswer().then(() => {
+
+                    saveAnswer()
+
+                    formEl.reset()
+
+                    const alrtEl = document.querySelector('.alrt')
+
+                    if (answer.result != '' && answer.message != '') {
+
+                        const alertEl = document.createElement('div')
+                        const removeButton = document.createElement('span')
+                        const resultEl = document.createElement('strong')
+                        const messageEl = document.createElement('span')
+
+                        alertEl.classList.add('alert')
+                        alertEl.style.backgroundColor = (answer.result === 'Success') ? 'green' : 'red'
+
+                        removeButton.classList.add('closebtn')
+                        removeButton.addEventListener('click', function () {
+                            alertEl.className = 'dis'
+                        })
+
+                        setTimeout(function () {
+                            alertEl.className = 'dis'
+                        }, 2000)
+
+                        resultEl.textContent = answer.result + '!'
+                        messageEl.textContent = answer.message + '.'
+
+                        alrtEl.innerHTML = ''
+
+                        alertEl.appendChild(removeButton)
+                        alertEl.appendChild(resultEl)
+                        alertEl.appendChild(messageEl)
+                        alrtEl.appendChild(alertEl)
+
+                        if (answer.result === 'Success') {
+                            setTimeout(function () {
+                                location.reload()
+                            }, 2000)
+                        }
+                    }
+                })
+            })
+
+            renderRecent()
+            renderAll()
+        </script>
+    </body>
+</html>
