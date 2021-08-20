@@ -1,18 +1,15 @@
 const express=require('express');
 const compression=require('compression');
-const ejs =require('ejs');
 const path = require('path');
 const multer =require('multer');
-const bodyParser = require("body-parser");
-const { json } = require('body-parser');
 const fs = require('fs')
 
 const app=express();
 app.use(compression());
 app.set('view engine','ejs');
 
-app.use(bodyParser.urlencoded({extended : true}));
-app.use(bodyParser.json());
+app.use(express.urlencoded({extended : true}));
+app.use(express.json());
 app.use('/uploads', express.static(__dirname + '/uploads'))
 
 const fileFilter = function(req, file, callback){
@@ -25,6 +22,8 @@ const fileFilter = function(req, file, callback){
 }
 const storage= multer.diskStorage({
     destination: function(req, file, callback){
+        if (!fs.existsSync(__dirname + '/uploads'))
+        fs.mkdirSync(__dirname + '/uploads')
         callback(null, 'uploads/');
     },
     filename:function(req, file, callback){
@@ -67,7 +66,7 @@ app.post('/upload', (req,res, next)=>{
 
 app.get('/', (req,res)=>{
 
-    const allUploads = fs.readdirSync(__dirname + '/uploads') 
+    const allUploads = fs.existsSync(__dirname + '/uploads') ? fs.readdirSync(__dirname + '/uploads') : [] 
 
     res.render('index', {all: allUploads});
 })
