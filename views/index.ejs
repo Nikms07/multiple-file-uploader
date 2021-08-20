@@ -99,6 +99,16 @@
             const allUploadsTemp = '<%- JSON.stringify(all) %>'
             const allUploads = JSON.parse(allUploadsTemp)
 
+            const myUploadsJSON = localStorage.getItem('myuploads')
+            let myUploads = myUploadsJSON ? JSON.parse(myUploadsJSON) : []
+
+            const saveMyUploads = () => {
+                localStorage.setItem('myuploads', JSON.stringify(myUploads))
+            }
+
+            myUploads = myUploads.filter((my) => allUploads.includes(my))
+            saveMyUploads()
+
             const answerJSON = localStorage.getItem('answer')
 
             let answer = answerJSON ? JSON.parse(answerJSON) : {
@@ -111,7 +121,7 @@
                 localStorage.setItem('answer', JSON.stringify(answer))
             }
 
-            answer.recent = answer.recent.filter((ri) => allUploads.includes(ri.filename))
+            answer.recent = answer.recent.filter((ri) => myUploads.includes(ri.filename))
             saveAnswer()
 
             const formEl = document.querySelector('#formEl')
@@ -175,8 +185,8 @@
                 const allEl = document.querySelector('.all')
                 allEl.innerHTML = ''
 
-                if (allUploads.length != 0) {
-                    allUploads.forEach(file => {
+                if (myUploads.length != 0) {
+                    myUploads.forEach(file => {
                         
                         const linkEl = document.createElement('a')
                         linkEl.setAttribute('href', `uploads/${file}`)
@@ -212,6 +222,11 @@
                 loadAnswer().then(() => {
 
                     saveAnswer()
+
+                    if (answer.result === 'Success') {
+                        answer.recent.forEach(ri => myUploads.push(ri.filename))
+                    }
+                    saveMyUploads()
 
                     formEl.reset()
 
