@@ -121,7 +121,7 @@
                 localStorage.setItem('answer', JSON.stringify(answer))
             }
 
-            answer.recent = answer.recent.filter((ri) => myUploads.includes(ri.filename))
+            answer.recent = answer.recent.filter((ri) => myUploads.includes(ri))
             saveAnswer()
 
             const formEl = document.querySelector('#formEl')
@@ -153,21 +153,21 @@
                     answer.recent.forEach(file => {
             
                         const linkEl = document.createElement('a')
-                        linkEl.setAttribute('href', file.path)
+                        linkEl.setAttribute('href', file)
 
-                        if (file.mimetype === 'video/mp4') {
+                        if (file.split('.').pop() === 'mp4') {
                             const vidEl = document.createElement('video')
                             vidEl.setAttribute('controls', true)
 
                             const vidsrcEl = document.createElement('source')
-                            vidsrcEl.setAttribute('src', file.path)
-                            vidsrcEl.setAttribute('type', file.mimetype)
+                            vidsrcEl.setAttribute('src', file)
+                            vidsrcEl.setAttribute('type', 'video/mp4')
 
                             vidEl.appendChild(vidsrcEl)
                             linkEl.appendChild(vidEl)
                         } else {
                             const imgEl = document.createElement('img')
-                            imgEl.setAttribute('src', file.path)
+                            imgEl.setAttribute('src', file)
 
                             linkEl.appendChild(imgEl)
                         }
@@ -189,21 +189,21 @@
                     myUploads.forEach(file => {
                         
                         const linkEl = document.createElement('a')
-                        linkEl.setAttribute('href', `uploads/${file}`)
+                        linkEl.setAttribute('href', file)
 
                         if (file.split('.').pop() === 'mp4') {
                             const vidEl = document.createElement('video')
                             vidEl.setAttribute('controls', true)
 
                             const vidsrcEl = document.createElement('source')
-                            vidsrcEl.setAttribute('src', `uploads/${file}`)
+                            vidsrcEl.setAttribute('src', file)
                             vidsrcEl.setAttribute('type', 'video/mp4')
 
                             vidEl.appendChild(vidsrcEl)
                             linkEl.appendChild(vidEl)
                         } else {
                             const imgEl = document.createElement('img')
-                            imgEl.setAttribute('src', `uploads/${file}`)
+                            imgEl.setAttribute('src', file)
 
                             linkEl.appendChild(imgEl)
                         }
@@ -224,7 +224,7 @@
                     saveAnswer()
 
                     if (answer.result === 'Success') {
-                        answer.recent.forEach(ri => myUploads.push(ri.filename))
+                        answer.recent.forEach(ri => myUploads.push(ri))
                     }
                     saveMyUploads()
 
